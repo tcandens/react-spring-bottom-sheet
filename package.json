@@ -37,10 +37,10 @@
     "@reach/portal": "^0.18.0",
     "@react-spring/web": "^9.7.3",
     "@use-gesture/react": "^10.2.27",
-    "@xstate/react": "^1.2.0",
+    "@xstate/react": "^3.2.2",
     "body-scroll-lock": "^3.1.5",
     "focus-trap": "^6.2.2",
-    "xstate": "^4.15.1"
+    "xstate": "^4.38.2"
   },
   "peerDependencies": {
     "react": "^16.14.0 || 17 || 18"

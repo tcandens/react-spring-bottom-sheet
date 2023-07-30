@@ -1,4 +1,4 @@
-import { interpolate } from '@react-spring/web'
+import { interpolate, to } from '@react-spring/web'
 import type { Spring } from './useSpring'
 import { clamp } from '../utils'
 
@@ -17,8 +17,7 @@ export function useSpringInterpolations({
   // This effect is for removing rounded corners on phones when the sheet touches the top of the browser chrome
   // as it's really ugly with the gaps border radius creates. This ensures it looks sleek.
   // @TODO the ts-ignore comments are because the `extrapolate` param isn't in the TS defs for some reason
-  const interpolateBorderRadius = interpolate(
-    // @ts-expect-error
+  const interpolateBorderRadius = to(
     [spring.y, spring.maxHeight],
     (y, maxHeight) => {
       return `${Math.round(clamp(maxHeight - y, 0, 16))}px`
