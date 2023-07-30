@@ -23,10 +23,8 @@ export function deleteNaN(arr) {
 
 export function roundAndCheckForNaN(unrounded) {
   const rounded = Math.round(unrounded)
-  if (Number.isNaN(unrounded)) {
-    throw new TypeError(
-      'Found a NaN! Check your snapPoints / defaultSnap / snapTo '
-    )
+  if (Number.isNaN(rounded)) {
+    return null
   }
 
   return rounded

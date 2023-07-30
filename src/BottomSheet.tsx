@@ -12,8 +12,8 @@ import React, {
   useImperativeHandle,
   useRef,
 } from 'react'
-import { animated, config } from 'react-spring'
-import { rubberbandIfOutOfBounds, useDrag } from 'react-use-gesture'
+import { animated, config } from '@react-spring/web'
+import { rubberbandIfOutOfBounds, useDrag } from '@use-gesture/react'
 import {
   useAriaHider,
   useFocusTrap,
@@ -486,7 +486,8 @@ export const BottomSheet = React.forwardRef<
     down,
     first,
     last,
-    memo = spring.y.getValue() as number,
+    // memo = spring.y.getValue() as number,
+    memo = spring.y.get() as number,
     movement: [, _my],
     tap,
     velocity,
