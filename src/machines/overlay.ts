@@ -1,82 +1,82 @@
-import { Machine, assign } from 'xstate'
+import { createMachine, assign } from 'xstate'
 
 // This is the root machine, composing all the other machines and is the brain of the bottom sheet
 
-interface OverlayStateSchema {
-  states: {
-    // the overlay usually starts in the closed position
-    closed: {}
-    opening: {
-      states: {
-        // Used to fire off the springStart event
-        start: {}
-        // Decide how to transition to the open state based on what the initialState is
-        transition: {}
-        // Fast enter animation, sheet is open by default
-        immediately: {
-          states: {
-            open: {}
-            activating: {}
-          }
-        }
-        smoothly: {
-          states: {
-            // This state only happens when the overlay should start in an open state, instead of animating from the bottom
-            // openImmediately: {}
-            // visuallyHidden will render the overlay in the open state, but with opacity 0
-            // doing this solves two problems:
-            // on Android focusing an input element will trigger the softkeyboard to show up, which will change the viewport height
-            // on iOS the focus event will break the view by triggering a scrollIntoView event if focus happens while the overlay is below the viewport and body got overflow:hidden
-            // by rendering things with opacity 0 we ensure keyboards and scrollIntoView all happen in a way that match up with what the sheet will look like.
-            // we can then move it to the opening position below the viewport, and animate it into view without worrying about height changes or scrolling overflow:hidden events
-            visuallyHidden: {}
-            // In this state we're activating focus traps, scroll locks and more, this will sometimes trigger soft keyboards and scrollIntoView
-            // @TODO we might want to add a delay here before proceeding to open, to give android and iOS enough time to adjust the viewport when focusing an interactive element
-            activating: {}
-            // Animates from the bottom
-            open: {}
-          }
-        }
-        // Used to fire off the springEnd event
-        end: {}
-        // And finally we're ready to transition to open
-        done: {}
-      }
-    }
-    open: {}
-    // dragging responds to user gestures, which may interrupt the opening state, closing state or snapping
-    // when interrupting an opening event, it fires onSpringEnd(OPEN) before onSpringStart(DRAG)
-    // when interrupting a closing event, it fires onSpringCancel(CLOSE) before onSpringStart(DRAG)
-    // when interrupting a dragging event, it fires onSpringCancel(SNAP) before onSpringStart(DRAG)
-    dragging: {}
-    // snapping happens whenever transitioning to a new snap point, often after dragging
-    snapping: {
-      states: {
-        start: {}
-        snappingSmoothly: {}
-        end: {}
-        done: {}
-      }
-    }
-    resizing: {
-      states: {
-        start: {}
-        resizingSmoothly: {}
-        end: {}
-        done: {}
-      }
-    }
-    closing: {
-      states: {
-        start: {}
-        deactivating: {}
-        closingSmoothly: {}
-        end: {}
-        done: {}
-      }
-    }
-  }
-}
+// interface OverlayStateSchema {
+//   states: {
+//     // the overlay usually starts in the closed position
+//     closed: {}
+//     opening: {
+//       states: {
+//         // Used to fire off the springStart event
+//         start: {}
+//         // Decide how to transition to the open state based on what the initialState is
+//         transition: {}
+//         // Fast enter animation, sheet is open by default
+//         immediately: {
+//           states: {
+//             open: {}
+//             activating: {}
+//           }
+//         }
+//         smoothly: {
+//           states: {
+//             // This state only happens when the overlay should start in an open state, instead of animating from the bottom
+//             // openImmediately: {}
+//             // visuallyHidden will render the overlay in the open state, but with opacity 0
+//             // doing this solves two problems:
+//             // on Android focusing an input element will trigger the softkeyboard to show up, which will change the viewport height
+//             // on iOS the focus event will break the view by triggering a scrollIntoView event if focus happens while the overlay is below the viewport and body got overflow:hidden
+//             // by rendering things with opacity 0 we ensure keyboards and scrollIntoView all happen in a way that match up with what the sheet will look like.
+//             // we can then move it to the opening position below the viewport, and animate it into view without worrying about height changes or scrolling overflow:hidden events
+//             visuallyHidden: {}
+//             // In this state we're activating focus traps, scroll locks and more, this will sometimes trigger soft keyboards and scrollIntoView
+//             // @TODO we might want to add a delay here before proceeding to open, to give android and iOS enough time to adjust the viewport when focusing an interactive element
+//             activating: {}
+//             // Animates from the bottom
+//             open: {}
+//           }
+//         }
+//         // Used to fire off the springEnd event
+//         end: {}
+//         // And finally we're ready to transition to open
+//         done: {}
+//       }
+//     }
+//     open: {}
+//     // dragging responds to user gestures, which may interrupt the opening state, closing state or snapping
+//     // when interrupting an opening event, it fires onSpringEnd(OPEN) before onSpringStart(DRAG)
+//     // when interrupting a closing event, it fires onSpringCancel(CLOSE) before onSpringStart(DRAG)
+//     // when interrupting a dragging event, it fires onSpringCancel(SNAP) before onSpringStart(DRAG)
+//     dragging: {}
+//     // snapping happens whenever transitioning to a new snap point, often after dragging
+//     snapping: {
+//       states: {
+//         start: {}
+//         snappingSmoothly: {}
+//         end: {}
+//         done: {}
+//       }
+//     }
+//     resizing: {
+//       states: {
+//         start: {}
+//         resizingSmoothly: {}
+//         end: {}
+//         done: {}
+//       }
+//     }
+//     closing: {
+//       states: {
+//         start: {}
+//         deactivating: {}
+//         closingSmoothly: {}
+//         end: {}
+//         done: {}
+//       }
+//     }
+//   }
+// }
 
 type OverlayEvent =
   | { type: 'OPEN' }
@@ -95,6 +95,7 @@ type OverlayEvent =
 // The context (extended state) of the machine
 interface OverlayContext {
   initialState: 'OPEN' | 'CLOSED'
+  snapSource: string
 }
 function sleep(ms = 1000) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -115,15 +116,14 @@ const initiallyClosed = ({ initialState }) => initialState === 'CLOSED'
 
 // Copy paste the machine into https://xstate.js.org/viz/ to make sense of what's going on in here ;)
 
-export const overlayMachine = Machine<
-  OverlayContext,
-  OverlayStateSchema,
-  OverlayEvent
->(
+export const overlayMachine = createMachine<OverlayContext, OverlayEvent>(
   {
     id: 'overlay',
     initial: 'closed',
-    context: { initialState: 'CLOSED' },
+    context: { 
+      initialState: 'CLOSED',
+      snapSource: undefined,
+    },
     states: {
       closed: { on: { OPEN: 'opening', CLOSE: undefined } },
       opening: {
@@ -197,8 +197,12 @@ export const overlayMachine = Machine<
               assign({
                 // @ts-expect-error
                 y: (_, { payload: { y } }) => y,
-                velocity: (_, { payload: { velocity } }) => velocity,
-                snapSource: (_, { payload: { source = 'custom' } }) => source,
+                velocity(_, e) {
+                  if (e.type === 'SNAP') return e.payload.velocity
+                },
+                snapSource(_, e) {
+                  if (e.type === 'SNAP') return e.payload.source || 'custom'
+                }
               }),
             ],
           },

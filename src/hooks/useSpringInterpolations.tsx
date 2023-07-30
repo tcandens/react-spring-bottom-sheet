@@ -33,14 +33,12 @@ export function useSpringInterpolations({
    *       A FLIP resize flow for content height would likely require the sticky elements to overlap the content area.
    *       Could be done as a separat mode though, or a separate example CSS for max performance.
    */
-  const interpolateHeight = interpolate(
-    // @ts-ignore
+  const interpolateHeight = to(
     [spring.y, spring.minSnap, spring.maxSnap],
     (y, minSnap, maxSnap) => `${clamp(y, minSnap, maxSnap)}px`
   )
 
-  const interpolateY = interpolate(
-    // @ts-ignore
+  const interpolateY = to(
     [spring.y, spring.minSnap, spring.maxSnap],
     (y, minSnap, maxSnap) => {
       if (y < minSnap) {
@@ -53,8 +51,7 @@ export function useSpringInterpolations({
     }
   )
 
-  const interpolateFiller = interpolate(
-    // @ts-ignore
+  const interpolateFiller = to(
     [spring.y, spring.maxSnap],
     (y, maxSnap) => {
       if (y >= maxSnap) {
@@ -64,8 +61,7 @@ export function useSpringInterpolations({
     }
   )
 
-  const interpolateContentOpacity = interpolate(
-    // @ts-ignore
+  const interpolateContentOpacity = to(
     [spring.y, spring.minSnap],
     (y, minSnap) => {
       if (!minSnap) {
@@ -82,8 +78,7 @@ export function useSpringInterpolations({
     }
   )
 
-  const interpolateBackdrop = interpolate(
-    // @ts-ignore
+  const interpolateBackdrop = to(
     [spring.y, spring.minSnap],
     (y, minSnap) => (minSnap ? clamp(y / minSnap, 0, 1) : 0)
   )

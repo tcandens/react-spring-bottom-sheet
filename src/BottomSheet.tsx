@@ -155,11 +155,10 @@ export const BottomSheet = React.forwardRef<
   }, [findSnap, getDefaultSnap, maxHeight, maxSnap, minSnap])
 
   // New utility for using events safely
-  const asyncSet = useCallback<typeof set>(
-    // @ts-expect-error
+  const asyncSet = useCallback(
     ({ onRest, config: { velocity = 1, ...config } = {}, ...opts }) =>
-      new Promise((resolve) =>
-        set({
+      new Promise((resolve) => {
+        return set({
           ...opts,
           config: {
             velocity,
@@ -175,11 +174,11 @@ export const BottomSheet = React.forwardRef<
             ),
           },
           onRest: (...args) => {
-            resolve(...args)
+            resolve(args)
             onRest?.(...args)
           },
         })
-      ),
+      }),
     [set]
   )
   const [current, send] = useMachine(overlayMachine, {
